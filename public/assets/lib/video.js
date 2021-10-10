@@ -74,7 +74,7 @@ async function videoCall() {
     });
 
     socket.on("user-connected", (userId) => {
-        myUserId = userId
+        myUserId = userId;
         console.log(myUserId);
         connectToNewUser(myUserId, stream);
     });
