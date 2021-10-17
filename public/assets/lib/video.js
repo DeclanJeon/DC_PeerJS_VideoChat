@@ -1,6 +1,10 @@
 const socket = io("/");
 const videoGrid = document.getElementById("video-grid");
 const localVideo = document.createElement("video");
+
+const userIdCtr = document.createElement("div");
+userIdCtr.id = "userId";
+
 localVideo.setAttribute("id", "local__video");
 localVideo.volume = 0;
 
@@ -14,7 +18,9 @@ const shareScreenBtn = document.getElementById("shareScreen");
 
 localVideo.muted = true;
 
-const peer = new Peer(undefined, {
+const peer = new Peer({
+    initiator: true,
+    trickle: false,
     path: "/",
     host: "0.peerjs.com",
     port: "443",
@@ -48,12 +54,26 @@ const constraints = {
     video: true,
 };
 
+const displayMediaConfig = {
+    video: {
+        cursor: "always" | "motion" | "never",
+        displaySurface: "application" | "browser" | "monitor" | "window",
+    },
+    audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+    },
+};
+
 let myVideoStream;
 let myUserId;
 
+const username = window.prompt("Enter the username");
+socket.emit("new user", username);
+
 function videoStreamFuncResult() {
     videoCall();
-    shareFilesBtn();
+    chattingFunc();
     shareScreenBtnFunc();
     handlerMuteControler();
 }
@@ -65,35 +85,21 @@ async function videoCall() {
     addVideoStream(localVideo, stream);
 
     peer.on("call", (call) => {
-        call.answer(stream);
         const remoteVideo = document.createElement("video");
         remoteVideo.setAttribute("id", "remote__video");
+        remoteVideo.volume = 0;
+
+        call.answer(stream);
         call.on("stream", (userVideoStream) => {
             addVideoStream(remoteVideo, userVideoStream);
+            this.currentPeer = call.peerConnection;
         });
     });
 
     socket.on("user-connected", (userId) => {
         myUserId = userId;
-        console.log(myUserId);
-        connectToNewUser(myUserId, stream);
-    });
-
-    let text = $("#chat_message");
-
-    $("html").keydown((e) => {
-        if (e.which == 13 && text.val().length !== 0) {
-            console.log(text.val());
-            socket.emit("message", text.val());
-            text.val("");
-        }
-    });
-
-    socket.on("createMessage", (message) => {
-        $("div.messages").append(
-            `<div class="message"><b>user</b><br/>${message}</div>`
-        );
-        scrollToBottom();
+        console.log("The User has been Connected. : ", userId);
+        connectToNewUser(userId, stream);
     });
 }
 
@@ -105,13 +111,49 @@ socket.on("user-disconnected", (userId) => {
 
 peer.on("open", (id) => {
     socket.emit("join-room", ROOM_ID, id);
-    console.log(id);
+    console.log("ROOM_ID : " + ROOM_ID);
+    console.log("Peer Open ID : ", id);
 });
+
+peer.on("error", (err) => {
+    console.log("error : " + err);
+});
+
+const chattingFunc = () => {
+    let text = $("#chat_message");
+
+    $("html").keydown((e) => {
+        if (e.which == 13 && text.val().length !== 0) {
+            socket.emit("new message", text.val());
+            text.val("");
+        }
+    });
+
+    socket.on("send message", (data) => {
+        const userName = data.user;
+        const message = data.message;
+
+        const messageList = document.getElementById("messages");
+        const userNameArea = document.createElement("div");
+        const messageArea = document.createElement("div");
+
+        userNameArea.className = "userName";
+        messageArea.className = "message";
+
+        userNameArea.textContent = userName;
+        messageArea.textContent = message;
+
+        messageList.append(userNameArea, messageArea);
+
+        scrollToBottom();
+    });
+};
 
 const connectToNewUser = (userId, stream) => {
     const call = peer.call(userId, stream);
     const remoteVideo = document.createElement("video");
     remoteVideo.setAttribute("id", "remote__video");
+    remoteVideo.volume = 0;
 
     call.on("stream", (userVideoStream) => {
         addVideoStream(remoteVideo, userVideoStream);
@@ -136,7 +178,7 @@ const shareScreen = async () => {
 
     try {
         captureStream = await navigator.mediaDevices.getDisplayMedia(
-            constraints
+            displayMediaConfig
         );
     } catch (err) {
         console.error("Error: " + err);
@@ -150,7 +192,12 @@ const addVideoStream = (video, stream) => {
         video.play();
     });
 
-    videoGrid.appendChild(video);
+    console.log(video.id);
+    if (video.id == "local__video") {
+        videoGrid.append(video);
+    } else {
+        remoteVideoContainer.append(video);
+    }
 };
 
 const scrollToBottom = () => {
