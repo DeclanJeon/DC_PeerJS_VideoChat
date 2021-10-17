@@ -5,7 +5,12 @@ const httpServer = require("http");
 const shortId = require("shortid");
 const cors = require("cors");
 const server = httpServer.createServer(app);
-const io = require("socket.io")(server);
+const io = require("socket.io")(server, {
+    cors: {
+        origin: "/",
+        methods: ["GET", "POST"],
+    },
+});
 const port = process.env.PORT || 1337;
 const hostname = "127.0.0.1";
 
