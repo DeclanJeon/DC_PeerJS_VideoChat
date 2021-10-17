@@ -73,7 +73,6 @@ socket.emit("new user", username);
 
 function videoStreamFuncResult() {
     videoCall();
-    chattingFunc();
     shareScreenBtnFunc();
     handlerMuteControler();
 }
@@ -118,36 +117,6 @@ peer.on("open", (id) => {
 peer.on("error", (err) => {
     console.log("error : " + err);
 });
-
-const chattingFunc = () => {
-    let text = $("#chat_message");
-
-    $("html").keydown((e) => {
-        if (e.which == 13 && text.val().length !== 0) {
-            socket.emit("new message", text.val());
-            text.val("");
-        }
-    });
-
-    socket.on("send message", (data) => {
-        const userName = data.user;
-        const message = data.message;
-
-        const messageList = document.getElementById("messages");
-        const userNameArea = document.createElement("div");
-        const messageArea = document.createElement("div");
-
-        userNameArea.className = "userName";
-        messageArea.className = "message";
-
-        userNameArea.textContent = userName;
-        messageArea.textContent = message;
-
-        messageList.append(userNameArea, messageArea);
-
-        scrollToBottom();
-    });
-};
 
 const connectToNewUser = (userId, stream) => {
     const call = peer.call(userId, stream);

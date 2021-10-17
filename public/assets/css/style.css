@@ -221,7 +221,7 @@ video {
     display: none;
 }
 
-.main__header > h2 {
+.main__header > .header__back > h2 {
     text-align: center;
     color: #fff;
     margin: 10px;
@@ -229,11 +229,12 @@ video {
 
 .header__back {
     display: none;
-    position: absolute;
+    position: relative;
     font-size: 1.3rem;
     top: 17px;
     left: 28px;
     color: #fff;
+    cursor: pointer;
 }
 
 @media (max-width: 750px) {
