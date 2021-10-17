@@ -2,12 +2,12 @@
     "name": "DC",
     "version": "1.0.0",
     "description": "",
-    "main": "index.js",
+    "main": "server.js",
     "devDependencies": {},
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "dev": "nodemon server/server.js",
-        "start": "npm start",
+        "start": "node server.js",
         "heroku-postbuild": "yarn build"
     },
     "engines": {
