@@ -12,7 +12,7 @@ const io = require("socket.io")(server, {
     },
 });
 const port = process.env.PORT || 1337;
-const hostname = "127.0.0.1";
+const host = "0.0.0.0";
 
 const users = {};
 
@@ -56,6 +56,6 @@ io.on("connection", (socket) => {
     });
 });
 
-server.listen(port, hostname, () => {
-    console.log(`Server Listening... http://${hostname}:${port}`);
+server.listen(port, host, () => {
+    console.log(`Server Listening... http://${host}:${port}`);
 });
