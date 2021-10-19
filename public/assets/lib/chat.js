@@ -53,6 +53,11 @@ const chattingFunc = () => {
     });
 };
 
+const scrollToBottom = () => {
+    let d = document.querySelector(".main__chat_window");
+    d.scrollTop = d.scrollHeight;
+};
+
 function chatResult() {
     chattingFunc();
 }

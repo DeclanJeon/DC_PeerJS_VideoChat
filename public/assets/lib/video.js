@@ -16,6 +16,8 @@ const videoBtn = document.getElementById("muteVideo");
 const audioBtn = document.getElementById("muteAudio");
 const shareScreenBtn = document.getElementById("shareScreen");
 
+const mediaDevices = navigator.mediaDevices;
+
 localVideo.muted = true;
 
 const peer = new Peer({
@@ -62,6 +64,7 @@ const displayMediaConfig = {
     audio: {
         echoCancellation: true,
         noiseSuppression: true,
+        sampleRate: 44100,
     },
 };
 
@@ -79,12 +82,16 @@ function videoStreamFuncResult() {
 
 async function videoCall() {
     const getUserMedia =
-        navigator.mediaDevices.getUserMedia ||
-        navigator.mediaDevices.webkitGetUserMedia ||
-        navigator.mediaDevices.mozGetUserMedia;
+        mediaDevices.getUserMedia ||
+        mediaDevices.webkitGetUserMedia ||
+        mediaDevices.mozGetUserMedia;
     const stream = await getUserMedia(constraints);
 
+    console.log(stream.getVideoTracks());
+
     myVideoStream = stream;
+    socket.connect();
+    console.log(socket.connect());
     addVideoStream(localVideo, stream);
 
     peer.on("call", (call) => {
@@ -172,11 +179,6 @@ const addVideoStream = (video, stream) => {
     } else {
         remoteVideoContainer.append(video);
     }
-};
-
-const scrollToBottom = () => {
-    let d = $(".main__chat_window");
-    d.scrollTop(d.prop("scrollHeight"));
 };
 
 const handlerAudioMute = () => {
