@@ -78,7 +78,11 @@ function videoStreamFuncResult() {
 }
 
 async function videoCall() {
-    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    const getUserMedia =
+        navigator.mediaDevices.getUserMedia ||
+        navigator.mediaDevices.webkitGetUserMedia ||
+        navigator.mediaDevices.mozGetUserMedia;
+    const stream = await getUserMedia(constraints);
 
     myVideoStream = stream;
     addVideoStream(localVideo, stream);
@@ -132,6 +136,7 @@ const connectToNewUser = (userId, stream) => {
     });
 
     peers[userId] = call;
+    console.log(peers[userId]);
 };
 
 function shareScreenBtnFunc() {

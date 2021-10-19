@@ -12,7 +12,7 @@ const io = require("socket.io")(server, {
     },
 });
 const port = process.env.PORT || 1337;
-const host = "0.0.0.0";
+const host = "127.0.0.1";
 
 const users = {};
 
