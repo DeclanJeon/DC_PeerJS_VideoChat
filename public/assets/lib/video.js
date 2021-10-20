@@ -18,26 +18,38 @@ const shareScreenBtn = document.getElementById("shareScreen");
 
 const mediaDevices = navigator.mediaDevices;
 
+let myVideoStream;
+let myUserId;
+let userCount = 0;
+
 localVideo.muted = true;
 
-const peer = new Peer({
+const peer = new Peer(undefined, {
     initiator: true,
     trickle: false,
     path: "/",
     host: "0.peerjs.com",
     port: "443",
-    pingInterval: 5000,
+    //path: "/peerjs",
+    //host: "localhost",
+    //port : "1337",
+    pingInterval: 2000,
     config: {
         iceServers: [
             {
-                url: "stun:stun.l.google.com:19302",
-                url: "turn:192.158.29.39:3478?transport=udp",
+                urls: "stun:stun.l.google.com:19302",
+            },
+            {
+                urls: "turn:192.158.29.39:3478?transport=udp",
                 credential: "JZEOEt2V3Qb0y27GRntt2u2PAYA=",
                 username: "28224511:1379330808",
             },
         ],
         sdpmantics: "unified-plan",
+        //iceTransportPolicy: "relay", // <- this is a hint for WebRTC to use the relay server
     },
+
+    debug: 3,
 });
 
 const peers = {};
@@ -61,15 +73,8 @@ const displayMediaConfig = {
         cursor: "always" | "motion" | "never",
         displaySurface: "application" | "browser" | "monitor" | "window",
     },
-    audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-        sampleRate: 44100,
-    },
+    audio: false,
 };
-
-let myVideoStream;
-let myUserId;
 
 const username = window.prompt("Enter the username");
 socket.emit("new user", username);
@@ -87,11 +92,7 @@ async function videoCall() {
         mediaDevices.mozGetUserMedia;
     const stream = await getUserMedia(constraints);
 
-    console.log(stream.getVideoTracks());
-
     myVideoStream = stream;
-    socket.connect();
-    console.log(socket.connect());
     addVideoStream(localVideo, stream);
 
     peer.on("call", (call) => {
@@ -102,32 +103,30 @@ async function videoCall() {
         call.answer(stream);
         call.on("stream", (userVideoStream) => {
             addVideoStream(remoteVideo, userVideoStream);
-            this.currentPeer = call.peerConnection;
         });
     });
 
     socket.on("user-connected", (userId) => {
         myUserId = userId;
-        console.log("The User has been Connected. : ", userId);
         connectToNewUser(userId, stream);
+        console.log("The User has been Connected. : ", userId);
+        userCount = userCount + peer.connect.length;
+        console.log("userCount : " + userCount);
+    });
+    socket.on("user-disconnected", (userId) => {
+        if (peers[userId]) {
+            peers[userId].close();
+        }
+    });
+
+    peer.on("open", (id) => {
+        socket.emit("join-room", ROOM_ID, id);
+    });
+
+    peer.on("error", (err) => {
+        console.log("error : " + err);
     });
 }
-
-socket.on("user-disconnected", (userId) => {
-    if (peers[userId]) {
-        peers[userId].close();
-    }
-});
-
-peer.on("open", (id) => {
-    socket.emit("join-room", ROOM_ID, id);
-    console.log("ROOM_ID : " + ROOM_ID);
-    console.log("Peer Open ID : ", id);
-});
-
-peer.on("error", (err) => {
-    console.log("error : " + err);
-});
 
 const connectToNewUser = (userId, stream) => {
     const call = peer.call(userId, stream);
@@ -148,22 +147,34 @@ const connectToNewUser = (userId, stream) => {
 
 function shareScreenBtnFunc() {
     shareScreenBtn.addEventListener("click", (e) => {
-        if (e.target) {
-            shareScreen();
-        }
+        shareScreen();
     });
+}
+
+function getDisplayMedia(options) {
+    if (mediaDevices && mediaDevices.getDisplayMedia) {
+        return mediaDevices.getDisplayMedia(options);
+    }
+    if (mediaDevices.getDisplayMedia) {
+        return mediaDevices.getDisplayMedia(options);
+    }
+    if (mediaDevices.webkitGetDisplayMedia) {
+        return mediaDevices.webkitGetDisplayMedia(options);
+    }
+    if (mediaDevices.mozGetDisplayMedia) {
+        return mediaDevices.mozGetDisplayMedia(options);
+    }
+    throw new Error("getDisplayMedia is not defined");
 }
 
 const shareScreen = async () => {
     let captureStream = null;
-
     try {
-        captureStream = await navigator.mediaDevices.getDisplayMedia(
-            displayMediaConfig
-        );
+        captureStream = await mediaDevices.getDisplayMedia(displayMediaConfig);
     } catch (err) {
         console.error("Error: " + err);
     }
+
     peer.call(myUserId, captureStream);
 };
 
