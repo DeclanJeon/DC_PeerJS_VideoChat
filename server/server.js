@@ -42,6 +42,10 @@ io.on("connection", (socket) => {
         socket.broadcast.emit("user-connected", userId);
         console.log("BoardCast User Connected : ", userId);
 
+        socket.on("screen-share", (stream) => {
+            io.to(roomId).emit("screenShare", stream, userId);
+        });
+
         socket.on("disconnect", () => {
             socket.broadcast.emit("user-disconnected", userId);
         });

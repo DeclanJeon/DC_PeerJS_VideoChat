@@ -112,6 +112,7 @@ async function videoCall() {
         console.log("The User has been Connected. : ", userId);
         userCount = userCount + peer.connect.length;
         console.log("userCount : " + userCount);
+        fileSharing(userId);
     });
     socket.on("user-disconnected", (userId) => {
         if (peers[userId]) {
@@ -168,14 +169,17 @@ function getDisplayMedia(options) {
 }
 
 const shareScreen = async () => {
+    // if (adapter.browserDetails.browser == "firefox") {
+    //     adapter.browserShim.shimGetDisplayMedia(window, "screen");
+    // }
     let captureStream = null;
     try {
         captureStream = await mediaDevices.getDisplayMedia(displayMediaConfig);
     } catch (err) {
         console.error("Error: " + err);
     }
-
-    peer.call(myUserId, captureStream);
+    connectToNewUser(myUserId, captureStream);
+    socket.emit("screen-share", captureStream);
 };
 
 const addVideoStream = (video, stream) => {
