@@ -12,7 +12,6 @@ const io = require("socket.io")(server, {
     },
 });
 const port = process.env.PORT || 1337;
-const host = "127.0.0.1";
 const roomID = nanoid();
 
 const users = {};
@@ -63,6 +62,6 @@ io.on("connection", (socket) => {
     });
 });
 
-server.listen(port, host, () => {
-    console.log(`Server Listening... http://${host}:${port}`);
+server.listen(port, () => {
+    console.log(`Server Listening... ${port}`);
 });
